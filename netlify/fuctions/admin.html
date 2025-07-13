@@ -1,0 +1,36 @@
+const { Client } = require('pg');
+
+exports.handler = async function (event) {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: "Sadece POST isteği kabul edilir.",
+    };
+  }
+
+  const { name, description, price, image_url } = JSON.parse(event.body);
+
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+
+  try {
+    await client.connect();
+    await client.query(
+      "INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)",
+      [name, description, price, image_url]
+    );
+    await client.end();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ mesaj: "Ürün başarıyla eklendi." }),
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ hata: "Sunucu hatası oluştu.", detay: err.message }),
+    };
+  }
+};
