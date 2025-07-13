@@ -1,18 +1,37 @@
-<script>
-  document.querySelector("form").addEventListener("submit", async function(e) {
-    e.preventDefault();
+const { Client } = require('pg');
 
-    const urunAdi = document.getElementById("adi").value;
-    const aciklama = document.getElementById("aciklama").value;
-    const fiyat = document.getElementById("fiyat").value;
-    const gorsel = document.getElementById("gorsel").value;
+exports.handler = async function (event) {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: "Sadece POST isteği kabul edilir.",
+    };
+  }
 
-    const response = await fetch("/.netlify/functions/urun-ekle", {
-      method: "POST",
-      body: JSON.stringify({ urunAdi, aciklama, fiyat, gorsel })
-    });
+  // İSİM UYUMLU HALE GETİRİLDİ
+  const { urunAdi, aciklama, fiyat, gorsel } = JSON.parse(event.body);
 
-    const data = await response.json();
-    document.getElementById("sonuc").innerText = data.message || "İşlem tamam";
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
   });
-</script>
+
+  try {
+    await client.connect();
+    await client.query(
+      "INSERT INTO products (name, description, price, image_url) VALUES ($1, $2, $3, $4)",
+      [urunAdi, aciklama, fiyat, gorsel]
+    );
+    await client.end();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Ürün başarıyla eklendi." }),
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ hata: "Sunucu hatası oluştu.", detay: err.message }),
+    };
+  }
+};
