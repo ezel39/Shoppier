@@ -1,34 +1,18 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <title>Ürün Ekle</title>
-</head>
-<body>
-  <h1>Ürün Ekle</h1>
-  <form id="urunForm">
-    <input type="text" name="name" placeholder="Ürün adı" required><br>
-    <textarea name="description" placeholder="Açıklama" required></textarea><br>
-    <input type="number" name="price" placeholder="Fiyat" step="0.01" required><br>
-    <input type="text" name="image_url" placeholder="Görsel URL"><br>
-    <button type="submit">Ekle</button>
-  </form>
-  <p id="mesaj"></p>
+<script>
+  document.querySelector("form").addEventListener("submit", async function(e) {
+    e.preventDefault();
 
-  <script>
-    document.getElementById('urunForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData.entries());
+    const urunAdi = document.getElementById("adi").value;
+    const aciklama = document.getElementById("aciklama").value;
+    const fiyat = document.getElementById("fiyat").value;
+    const gorsel = document.getElementById("gorsel").value;
 
-      const res = await fetch('/.netlify/functions/urun-ekle', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-
-      const sonuc = await res.json();
-      document.getElementById('mesaj').innerText = sonuc.mesaj || sonuc.hata;
+    const response = await fetch("/.netlify/functions/urun-ekle", {
+      method: "POST",
+      body: JSON.stringify({ urunAdi, aciklama, fiyat, gorsel })
     });
-  </script>
-</body>
-</html>
+
+    const data = await response.json();
+    document.getElementById("sonuc").innerText = data.message || "İşlem tamam";
+  });
+</script>
